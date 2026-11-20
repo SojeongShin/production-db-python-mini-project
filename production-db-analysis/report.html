@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>생산 데이터 분석 보고서</title>
+<!--
+  [사용 방법]
+  1. 이 파일(report.html)을 저장소 최상위 폴더에 둡니다. 차트는 images/ 폴더에 저장합니다.
+  2. 노란 칸과 [ ... ] 부분을 본인 내용으로 바꿉니다. 미션 이름·지시문은 선택한 트랙에 맞게 고칩니다.
+  3. 위 트랙 미션에 도전했다면 미션 section을 하나 복사해 추가합니다.
+  4. 브라우저로 열어 확인하고, 필요하면 Ctrl+P → PDF로 저장합니다.
+  ※ 수치는 노트북 출력값을 그대로 옮기고, 확인하지 않은 원인은 "추가 확인 필요"로 적습니다.
+-->
+<style>
+  :root {
+    --ink: #1f2933;
+    --sub: #52606d;
+    --line: #d9dee3;
+    --bg: #f7f8fa;
+    --accent: #1d4ed8;
+    --accent-soft: #e8efff;
+    --todo: #fff6d6;
+    --ok: #0f766e;
+    --warn: #b45309;
+    --bad: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .page {
+    max-width: 960px;
+    margin: 32px auto;
+    background: #fff;
+    padding: 48px 56px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  h1 { font-size: 28px; margin: 0 0 8px; }
+  h2 {
+    font-size: 20px;
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--ink);
+  }
+  h3 { font-size: 17px; margin: 28px 0 10px; }
+  p { margin: 8px 0; }
+  .sub { color: var(--sub); }
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .badge.req { background: var(--accent-soft); color: var(--accent); }
+  .badge.opt { background: #f1f5f9; color: var(--sub); }
+  .notice {
+    background: #f1f5f9;
+    border-left: 4px solid var(--sub);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--sub);
+    margin: 16px 0;
+  }
+
+  /* 표지 메타 정보 */
+  .meta { display: grid; grid-template-columns: 120px 1fr; gap: 6px 16px; margin-top: 20px; }
+  .meta dt { color: var(--sub); }
+  .meta dd { margin: 0; }
+
+  /* 핵심 요약 */
+  .summary {
+    background: var(--accent-soft);
+    border-radius: 10px;
+    padding: 18px 22px;
+  }
+  .summary ol { margin: 0; padding-left: 20px; }
+  .summary li { margin: 6px 0; }
+
+  /* 표 */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f1f5f9; font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* 미션 카드 */
+  .mission { border: 1px solid var(--line); border-radius: 10px; padding: 22px 26px; margin: 20px 0; }
+  .order {
+    background: #fafafa;
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    margin: 10px 0 18px;
+    font-style: italic;
+  }
+  .label { font-weight: 700; font-size: 13px; color: var(--accent); margin: 16px 0 4px; letter-spacing: .02em; }
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 14px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  code { font-family: "D2Coding", Consolas, "Courier New", monospace; }
+
+  /* 차트 영역: 이미지가 없으면 안내 박스 표시 */
+  .chart { margin: 10px 0; text-align: center; }
+  .chart img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+  .chart .ph { display: none; }
+  .chart.empty img { display: none; }
+  .chart.empty .ph {
+    display: block;
+    border: 2px dashed var(--line);
+    border-radius: 8px;
+    padding: 48px 16px;
+    color: var(--sub);
+    font-size: 13px;
+  }
+  .caption { font-size: 13px; color: var(--sub); margin-top: 6px; }
+
+  /* 보고 문장 */
+  .report-box { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-top: 8px; }
+  .report-box div { display: grid; grid-template-columns: 70px 1fr; border-top: 1px solid var(--line); }
+  .report-box div:first-child { border-top: none; }
+  .report-box b { background: #f8fafc; padding: 8px 10px; font-size: 13px; }
+  .report-box span { padding: 8px 12px; }
+
+  /* 작성할 곳 표시 */
+  .todo { background: var(--todo); }
+
+  .judge-ok { color: var(--ok); font-weight: 600; }
+  .judge-warn { color: var(--warn); font-weight: 600; }
+  .judge-bad { color: var(--bad); font-weight: 600; }
+
+  footer { margin-top: 48px; font-size: 12px; color: var(--sub); text-align: center; }
+
+  @media print {
+    body { background: #fff; }
+    .page { border: none; margin: 0; padding: 0; max-width: none; }
+    .mission { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+<header>
+  <p class="sub">생산 데이터 분석 보고서</p>
+  <h1>가전 조립공장 10월 생산 실적 분석 — 불량률 급등과 설비 온도·진동 이상 신호</h1>
+  <dl class="meta">
+    <dt>작성자</dt><dd>신 소 정</dd>
+    <dt>작성일</dt><dd>2026-11-20</dd>
+    <dt>수행 트랙</dt><dd>상 트랙 (상2)</dd>
+    <dt>분석 기간</dt><dd>2026-10-01 ~ 2026-10-31 (일요일 휴무, 가동일 27일)</dd>
+    <dt>대상</dt><dd>L1 냉장고 · L2 세탁기 · L3 에어컨 조립라인</dd>
+    <dt>사용 기술</dt><dd>PostgreSQL, Python (pandas, numpy, SQLAlchemy, matplotlib), Jupyter</dd>
+    <dt>저장소</dt><dd><a href="https://github.com/SojeongShin/production-db-python-mini-project">github.com/SojeongShin/production-db-python-mini-project</a></dd>
+  </dl>
+  <div class="notice">본 보고서는 실습용 합성 데이터를 사용했으며, 실제 공장 수치가 아닙니다.</div>
+</header>
+
+<h2>1. 핵심 요약</h2>
+<div class="summary"><ol>
+  <li>10월 중 라인별 불량률 임계치(평균+2σ)를 넘은 날은 <b>L2 10/16(5.42%)</b>과 <b>L1 10/27(2.02%)</b> 두 번이며, L3는 한 번도 넘지 않았습니다.</li>
+  <li>L2 드럼 용접기(EQ-201)는 실제 고장(10/16 20:59)보다 <b>약 54시간 앞선 10/14 15:00에 온도가 기준을 넘었습니다</b>. 불량률을 일 단위가 아니라 교대 단위로, 온도·진동을 시각 단위로 보면 고장을 훨씬 일찍 진단할 수 있습니다.</li>
+  <li>L1 10/27 초과일에는 온도·진동에 뚜렷한 변화가 없었습니다. 이날 불량의 원인은 설비 센서 외의 요인일 수 있어 「추가 확인 필요」로 남깁니다.</li>
+</ol></div>
+
+<h2>2. 데이터 개요</h2>
+<table><thead><tr><th>테이블</th><th>행 수</th><th>설명</th></tr></thead><tbody>
+<tr><td>line_master</td><td class="num">3</td><td>라인 기준정보</td></tr>
+<tr><td>equipment_master</td><td class="num">9</td><td>설비 기준정보 (라인당 3대)</td></tr>
+<tr><td>model_master</td><td class="num">6</td><td>모델 기준정보</td></tr>
+<tr><td>production_result</td><td class="num">162</td><td>교대별 생산 실적</td></tr>
+<tr><td>defect_log</td><td class="num">380</td><td>불량 유형별 수량</td></tr>
+<tr><td>downtime_log</td><td class="num">203</td><td>비가동 기록 (설비 무관 사유 156건은 equip_code NULL)</td></tr>
+<tr><td>sensor_hourly</td><td class="num">5,832</td><td>설비 센서 1시간 평균 (temp_c NULL 35행)</td></tr>
+<tr><td>quality_judgment</td><td class="num">243</td><td>판정 결과 기록 — 본 분석에서 설비 9대 × 가동일 27일로 입력 (열 추가, 아래 3장 참고)</td></tr>
+<tr><td>employee_master</td><td class="num">70</td><td>현장 직원 기준정보 (라인·교대조·숙련등급)</td></tr>
+<tr><td>attendance_log</td><td class="num">1,890</td><td>일별 근태 (출근·지각·결근·휴가, 직원 70명 × 가동일 27일)</td></tr>
+<tr><td>training_log</td><td class="num">91</td><td>교육 이수 기록 (이수한 사람만 행이 있음)</td></tr>
+</tbody></table>
+<p><b>분석 전 확인한 데이터 규칙</b></p>
+<ul>
+<li>행 수 검산: <code>COUNT(*)</code>로 production_result 162행, equipment_master 9행, sensor_hourly 5,832행을 확인했으며, 모두 데이터 명세와 일치합니다.</li>
+<li>sensor_hourly는 설비마다 1시간 단위(하루 24행)입니다. 9대 × 27일 × 24시간 = 5,832행으로 건수가 맞습니다.</li>
+<li>production_result의 <code>defect_qty</code>와 <code>prod_qty</code>는 정수형입니다. PostgreSQL에서 정수끼리 나누면 소수점 아래가 버려지므로, 불량률은 <code>::numeric</code>으로 변환한 뒤 계산했습니다.</li>
+<li>불량률은 라인 단위 값이고(설비 컬럼 없음), 온도·진동은 설비 단위 값입니다. 그래서 두 값을 일자·라인 기준으로 연결했습니다.</li>
+</ul>
+
+<h2>3. 미션별 분석</h2>
+<section class="mission">
+  <h3>상-2. 설비 고장 전 이상 신호 확인</h3>
+  <div class="order">"설비고장 나기 전에 온도나 진동에 이상 신호가 있었는지 확인해봐."</div>
+
+  <p class="label">지시 해석</p>
+  <p>불량률이 비정상적으로 높았던 날(문제 발생 시점)을 찾고, 그 전후로 해당 라인 설비의 온도·진동이 먼저 변했는지를 시각화해 보고합니다.</p>
+
+  <p class="label">접근 방법</p>
+  <ul>
+    <li>사용 테이블: <code>production_result</code>, <code>sensor_hourly</code>, <code>equipment_master</code>, <code>downtime_log</code>, <code>quality_judgment</code></li>
+    <li>계산식·조건:
+      <ul>
+        <li>일 불량률(%) = Σ불량수 / Σ생산수 × 100 (일자·라인별)</li>
+        <li>판정 임계치 = 라인별 일 불량률의 평균 + 2σ (k=2). 초과하면 '이상', 아니면 '정상'</li>
+        <li>온도·진동 = 설비·일자별 1시간 값의 평균(<code>avg</code>)과 최댓값(<code>max</code>)</li>
+        <li>조기 진단: 불량률은 교대(주간·야간) 단위, 온도·진동은 1시간 단위로 다시 보고, 실제 고장 시각(<code>downtime_log</code>)과 비교</li>
+      </ul>
+    </li>
+    <li>SQL로 한 것: 일자·라인별 불량률 집계, 설비·일자별 온도·진동 집계, 라인별 임계치 계산과 판정 <code>UPDATE</code> (윈도우·CTE 사용)</li>
+    <li>pandas로 한 것: 결과 DataFrame 형변환(Decimal → float), <code>quality_judgment</code> 일괄 <code>INSERT</code>, matplotlib 시각화</li>
+    <li>테이블 변경: 설비 단위로 기록하기 위해 <code>quality_judgment</code>에 <code>equip_code</code>, <code>avg_vib</code>, <code>max_vib</code>, <code>avg_temp</code>, <code>max_temp</code>, <code>judge_reason</code> 열을 추가했습니다. 고유키는 <code>(work_date, equip_code)</code>로 바꿨습니다.</li>
+  </ul>
+
+  <p class="label">핵심 SQL</p>
+<pre><code>-- ① 설비·일자별 온도·진동 + 해당 라인의 당일 불량률
+with s as (
+    select measured_at::date as work_date, equip_code,
+           round(avg(vibration_mm_s), 2) as avg_vib, max(vibration_mm_s) as max_vib,
+           round(avg(temp_c), 1)         as avg_temp, max(temp_c)        as max_temp
+    from sensor_hourly
+    group by 1, 2
+),
+rate as (
+    select work_date, line_code,
+           round(sum(defect_qty) * 100.0 / nullif(sum(prod_qty), 0), 2) as defect_rate
+    from production_result
+    group by 1, 2
+)
+select s.*, e.line_code, r.defect_rate
+from s
+join equipment_master e using (equip_code)
+join rate r on r.work_date = s.work_date and r.line_code = e.line_code;
+
+-- ② 라인별 임계치(평균 + k·σ, k=2)로 불량률 판정
+with lr as (
+    select distinct work_date, line_code, defect_rate
+    from quality_judgment where equip_code is not null
+),
+th as (
+    select line_code, avg(defect_rate) + :k * stddev(defect_rate) as limit_rate
+    from lr group by line_code
+)
+update quality_judgment qj
+set judgment     = case when qj.defect_rate &gt; th.limit_rate then '이상' else '정상' end,
+    judge_reason = case when qj.defect_rate &gt; th.limit_rate
+                        then '불량률 ' || qj.defect_rate || '% &gt; 기준 ' || round(th.limit_rate, 2) || '%' end
+from th
+where qj.line_code = th.line_code and qj.equip_code is not null;</code></pre>
+
+  <p class="label">결과 ① 라인별 판정 (k=2)</p>
+  <table><thead><tr><th>라인</th><th>임계치 (평균+2σ)</th><th>이상일</th><th>정상일</th><th>이상일 불량률</th></tr></thead>
+  <tbody>
+    <tr><td>L1 냉장고</td><td class="num">1.88%</td><td class="num">1일</td><td class="num">26일</td><td><span class="judge-bad">10/27 · 2.02%</span></td></tr>
+    <tr><td>L2 세탁기</td><td class="num">3.66%</td><td class="num">1일</td><td class="num">26일</td><td><span class="judge-bad">10/16 · 5.42%</span></td></tr>
+    <tr><td>L3 에어컨</td><td class="num">1.65%</td><td class="num">0일</td><td class="num">27일</td><td><span class="judge-ok">없음</span></td></tr>
+  </tbody></table>
+
+  <p class="label">결과 ② L2 불량률 급등 전후 — 드럼 용접기(EQ-201)</p>
+  <table><thead><tr><th>일자</th><th>L2 불량률</th><th>평균 진동 (mm/s)</th><th>최대 진동 (mm/s)</th><th>평균 온도 (℃)</th><th>최대 온도 (℃)</th></tr></thead>
+  <tbody>
+    <tr><td>10/13</td><td class="num">1.51%</td><td class="num">1.98</td><td class="num">2.32</td><td class="num">45.1</td><td class="num">47.4</td></tr>
+    <tr><td>10/14</td><td class="num">3.09%</td><td class="num">2.24</td><td class="num">2.88</td><td class="num">48.0</td><td class="num">51.8</td></tr>
+    <tr><td>10/15</td><td class="num">3.63%</td><td class="num">2.63</td><td class="num">3.38</td><td class="num">53.0</td><td class="num">56.4</td></tr>
+    <tr><td><b>10/16</b></td><td class="num"><span class="judge-bad">5.42%</span></td><td class="num">2.95</td><td class="num">3.33</td><td class="num">57.5</td><td class="num">61.8</td></tr>
+    <tr><td>10/17</td><td class="num">1.52%</td><td class="num">2.56</td><td class="num">3.62</td><td class="num">52.4</td><td class="num">60.7</td></tr>
+    <tr><td>그 외 기간 평균</td><td class="num">—</td><td class="num">2.01</td><td class="num">2.51</td><td class="num">45.0</td><td class="num">47.1</td></tr>
+  </tbody></table>
+  <p class="caption">같은 기간 L2의 다른 설비(EQ-202 모터 조립로봇, EQ-203 탈수 검사기)는 평균 진동 1.94~2.04mm/s, 평균 온도 28.7~33.1℃로 변화가 없었습니다.</p>
+
+  <div class="chart">
+    <img src="images/상2_L1_불량률_진동온도.png" alt="그림 1. L1 라인 일자별 불량률과 진동·온도" onerror="this.parentNode.classList.add('empty')">
+    <span class="ph">차트 이미지 위치: images/상2_L1_불량률_진동온도.png</span>
+  </div>
+  <p class="caption">그림 1. L1은 10/27에 불량률이 임계치(1.88%)를 넘었지만, 같은 시기 온도·진동에는 뚜렷한 변화가 없습니다. 붉은 음영이 임계치 초과일입니다.</p>
+
+  <div class="chart">
+    <img src="images/상2_L2_불량률_진동온도.png" alt="그림 2. L2 라인 일자별 불량률과 진동·온도" onerror="this.parentNode.classList.add('empty')">
+    <span class="ph">차트 이미지 위치: images/상2_L2_불량률_진동온도.png</span>
+  </div>
+  <p class="caption">그림 2. L2는 10/14부터 온도·진동이 먼저 오르기 시작했고, 10/16 불량률이 임계치(3.66%)를 넘었습니다.</p>
+
+  <div class="chart">
+    <img src="images/상2_L3_불량률_진동온도.png" alt="그림 3. L3 라인 일자별 불량률과 진동·온도" onerror="this.parentNode.classList.add('empty')">
+    <span class="ph">차트 이미지 위치: images/상2_L3_불량률_진동온도.png</span>
+  </div>
+  <p class="caption">그림 3. L3는 10월 내내 불량률이 임계치(1.65%) 아래였고, 온도·진동도 안정적이었습니다.</p>
+
+  <p class="label">결과 ③ 더 잘게 보기 — L2 교대별 불량률</p>
+  <table><thead><tr><th>일자</th><th>주간</th><th>야간</th></tr></thead>
+  <tbody>
+    <tr><td>10/13</td><td class="num">1.00%</td><td class="num">2.04%</td></tr>
+    <tr><td>10/14</td><td class="num">2.64%</td><td class="num"><span class="judge-bad">3.54%</span></td></tr>
+    <tr><td>10/15</td><td class="num">2.71%</td><td class="num"><span class="judge-bad">4.55%</span></td></tr>
+    <tr><td>10/16</td><td class="num"><span class="judge-bad">5.01%</span></td><td class="num"><span class="judge-bad">5.84%</span></td></tr>
+    <tr><td>10/17</td><td class="num">1.36%</td><td class="num">1.63%</td></tr>
+  </tbody></table>
+  <p class="caption">교대별 임계치 2.96%(전체 교대 불량률의 평균+2σ)를 넘은 칸을 빨간색으로 표시했습니다. 일 단위로는 10/16에야 잡히던 이상이, 교대 단위로는 <b>10/14 야간</b>부터 잡힙니다.</p>
+
+  <p class="label">결과 ④ 더 잘게 보기 — EQ-201 시각별 온도·진동과 실제 고장</p>
+  <table><thead><tr><th>신호</th><th>평소 평균</th><th>기준 (평균+3σ)</th><th>처음 넘은 시각</th></tr></thead>
+  <tbody>
+    <tr><td>온도</td><td class="num">45.0℃</td><td class="num">48.8℃</td><td><b>10/14 15:00</b></td></tr>
+    <tr><td>진동</td><td class="num">2.01mm/s</td><td class="num">2.79mm/s</td><td>10/14 19:00</td></tr>
+  </tbody></table>
+  <p class="caption">평소 값은 이상 구간(10/12~20)을 뺀 기간의 1시간 값으로 계산했습니다.</p>
+  <table><thead><tr><th>시각</th><th>사건</th><th>보는 단위</th></tr></thead>
+  <tbody>
+    <tr><td>10/14 15:00</td><td><b>온도 이상 신호</b> (48.8℃ 초과)</td><td>센서 · 1시간</td></tr>
+    <tr><td>10/14 19:00</td><td>진동 이상 신호 (2.79mm/s 초과)</td><td>센서 · 1시간</td></tr>
+    <tr><td>10/14 야간</td><td>불량률 3.54%로 상승</td><td>생산 · 교대</td></tr>
+    <tr><td>10/16</td><td>일 불량률 5.42%, 일 단위 판정에서 처음 '이상'</td><td>생산 · 일</td></tr>
+    <tr><td>10/16 20:59</td><td><span class="judge-bad">설비고장</span> (31분 정지)</td><td><code>downtime_log</code></td></tr>
+    <tr><td>10/17 09:05</td><td><span class="judge-bad">설비고장</span> (150분 정지) → 13:59 품질점검 60분</td><td><code>downtime_log</code></td></tr>
+    <tr><td>10/17</td><td>불량률 1.52%로 정상화</td><td>생산 · 일</td></tr>
+  </tbody></table>
+  <p class="caption">온도 이상 신호는 첫 고장보다 <b>약 54시간</b> 먼저 나타났습니다. 일 단위 불량률보다 교대 단위가, 교대 단위보다 시각 단위 센서가 더 먼저 이상을 보여 줍니다.</p>
+
+  <p class="label">보고</p>
+  <div class="report-box">
+    <div><b>결론</b><span>L2 드럼 용접기(EQ-201)는 고장 전에 이상 신호가 있었습니다. 실제 고장(10/16 20:59)보다 약 54시간 먼저 온도가 기준을 넘었고, 교대·시각 단위로 보면 일 단위보다 훨씬 일찍 고장을 진단할 수 있습니다.</span></div>
+    <div><b>근거</b><span>EQ-201의 일 평균 온도는 평소 45.0℃에서 10/16에 57.5℃로 +12.5℃, 평균 진동은 2.01에서 2.95mm/s로 +47% 올랐습니다. 같은 날 L2 불량률은 5.42%로 임계치 3.66%를 넘었습니다. 하지만 일 단위 판정은 고장 당일(10/16)에야 이상을 잡았습니다. 교대 단위로는 10/14 야간(3.54%)부터, 시각 단위 센서로는 10/14 15:00(온도)부터 이상이 보였습니다. 고장 정비(10/17) 후 불량률은 1.52%로 정상화되었습니다.</span></div>
+    <div><b>제안</b><span>① 설비 이상 감시는 일 단위가 아니라 <b>센서 1시간 단위</b>로 하고, 불량률은 <b>교대 단위</b>로 모니터링할 것을 제안합니다. ② 시간 단위 값은 잡음이 많으므로, "평소 대비 3σ 초과가 몇 시간 연속되면 경보"처럼 연속 조건을 두어 오경보를 줄여야 합니다. ③ <b>추가 확인 필요:</b> EQ-201은 10월에 설비고장이 이 밖에도 4건(10/6, 10/22, 10/26, 10/28) 더 있어, 같은 신호가 앞서 나타났는지 확인이 필요합니다. ④ L1 10/27 불량 원인은 센서 외 요인(<code>defect_log</code> 불량 유형, 모델, 근태)으로 추가 확인이 필요합니다.</span></div>
+  </div>
+</section>
+
+<h2>4. 트러블슈팅</h2>
+<table><thead><tr><th>문제</th><th>원인</th><th>해결</th></tr></thead><tbody>
+<tr><td>불량률이 모두 0으로 나옴</td><td>PostgreSQL은 정수끼리 나누면 소수점 아래를 버림</td><td><code>defect_qty::numeric / nullif(prod_qty, 0)</code>으로 실수 변환. 0으로 나누기도 방지</td></tr>
+<tr><td><code>column reference "equip_code" is ambiguous</code></td><td><code>sensor_hourly</code>와 <code>equipment_master</code> 양쪽에 같은 이름의 열이 있음</td><td>별칭을 붙여 <code>s.equip_code = e.equip_code</code>로 지정</td></tr>
+<tr><td>평균·표준편차를 변수 두 개로 받으면 값 대신 열 이름이 들어감</td><td><code>q()</code>는 DataFrame을 반환하고, 서브쿼리에 별칭이 없었음</td><td><code>.iloc[0].astype(float)</code>로 첫 행을 꺼내 Decimal을 float로 변환. 서브쿼리에 별칭 <code>t</code> 추가</td></tr>
+<tr><td>셀을 다시 실행하면 중복키 에러</td><td><code>quality_judgment</code>에 UNIQUE 제약이 있음</td><td><code>on conflict ... do update</code>로 덮어쓰기 처리</td></tr>
+<tr><td><code>quality_judgment</code>에 설비 단위 값을 넣을 수 없음</td><td><code>line_code</code> 열은 라인 FK이고 <code>equip_code</code> 열이 없음</td><td><code>alter table</code>로 <code>equip_code</code> 등 열을 추가하고, 고유키를 <code>(work_date, equip_code)</code>로 변경</td></tr>
+</tbody></table>
+
+<h2>5. AI 활용 내역</h2>
+<p>AI(Claude)에게 채팅으로 문법·개념을 질문하고 코드 예시를 받아, 제 데이터에 맞게 실행하고 확인했습니다.</p>
+<table><thead><tr><th>질문 요지</th><th>알게 된 것</th><th>내 코드에 적용한 방법</th></tr></thead><tbody>
+<tr><td>나눗셈 결과가 0으로 나오는 이유</td><td>PostgreSQL 정수 나눗셈, <code>round(numeric, n)</code></td><td>불량률 계산식에 <code>::numeric</code> 적용</td></tr>
+<tr><td>불량률 임계치 공식</td><td>p 관리도, 평균 + k·σ, 분위수 방식</td><td>평균 + 2σ / 3σ로 임계치 계산</td></tr>
+<tr><td>SQL 결과를 파이썬 변수로 받기 · SQL에 변수 넘기기</td><td><code>.iloc[0]</code>, 파라미터 바인딩 <code>:이름</code></td><td><code>tol2</code>를 <code>:tol</code>로 넘겨 초과 교대 추출</td></tr>
+<tr><td>판정 결과를 반복 없이 INSERT하는 방법</td><td><code>to_dict('records')</code> 일괄 실행, <code>on conflict</code></td><td><code>quality_judgment</code> 일괄 입력</td></tr>
+<tr><td><code>apply</code>, <code>transform</code>의 의미</td><td>행별 함수 적용, 그룹 값을 원래 행에 붙이기 (대안: <code>agg</code>+<code>merge</code>)</td><td>설비별 기준표를 <code>agg</code>+<code>merge</code>로 작성</td></tr>
+<tr><td>불량률과 진동·온도를 같은 시기로 그리는 방법</td><td>단위가 다른 값은 x축을 공유하는 여러 칸으로 나눠 그림</td><td>라인별 3단 그래프 작성 (그림 1~3)</td></tr>
+</tbody></table>
+
+<h2>6. 회고 및 확장 방향</h2>
+<h3>배운 점</h3><ul>
+  <li>집계 단위(라인 × 일자, 설비 × 일자, 1시간)가 다른 테이블을 연결할 때는 먼저 단위를 맞춰야 한다는 것을 배웠습니다.</li>
+  <li>임계치 같은 통계 기준을 SQL 안(CTE, 윈도우 함수)에서 계산하고 바로 <code>UPDATE</code>까지 할 수 있었습니다.</li>
+</ul>
+<h3>아쉬운 점</h3><ul>
+  <li>불량률이 라인 단위라서 설비별 원인을 직접 연결하지 못했고, 고장 기록(<code>downtime_log</code>)과의 대조는 L2 10/16 고장 한 건만 했습니다.</li>
+  <li>분석 과정에서 <code>quality_judgment</code> 구조를 여러 번 바꿔서, 원본 스키마와 달라졌습니다.</li>
+</ul>
+<h3>다음에 공부해서 적용할 것</h3><ul><li class="todo">[가이드라인 6-1 심화 학습 가이드 중 고른 것]</li></ul>
+<footer>본 보고서의 데이터는 실습용 합성 데이터입니다. · 작성자 <span class="todo">[이름]</span></footer>
+</main>
+</body>
+</html>
